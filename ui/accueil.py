@@ -19,7 +19,7 @@ def vue_accueil() -> None:
 def _hero() -> None:
     st.markdown(
         '<div class="bb-hero">'
-        '<h1>Assistant Technique <span class="bb-accent">BB®</span></h1>'
+        '<h1>Assistant Technique BB®</h1>'
         '<div class="bb-hero-tagline">RAG sur la doc interne, Nuxt 3, Symfony 7. '
         'Validation humaine obligatoire avant chaque livraison.</div>'
         '</div>',
