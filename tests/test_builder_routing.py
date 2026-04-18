@@ -5,14 +5,24 @@ import pytest
 from graph.builder import router_apres_hitl
 
 
-def test_approve_va_vers_fin():
-    etat = {"decision_humaine": "approve", "iteration": 1}
+def test_approve_question_va_vers_fin():
+    etat = {"decision_humaine": "approve", "mode": "question", "iteration": 1}
     assert router_apres_hitl(etat) == "fin"
 
 
-def test_edit_va_vers_fin():
-    etat = {"decision_humaine": "edit", "iteration": 2}
+def test_approve_scaffolding_va_vers_executor():
+    etat = {"decision_humaine": "approve", "mode": "scaffolding", "iteration": 1}
+    assert router_apres_hitl(etat) == "executor"
+
+
+def test_edit_question_va_vers_fin():
+    etat = {"decision_humaine": "edit", "mode": "question", "iteration": 2}
     assert router_apres_hitl(etat) == "fin"
+
+
+def test_edit_scaffolding_va_vers_executor():
+    etat = {"decision_humaine": "edit", "mode": "scaffolding", "iteration": 2}
+    assert router_apres_hitl(etat) == "executor"
 
 
 def test_reject_sous_max_regenere():
