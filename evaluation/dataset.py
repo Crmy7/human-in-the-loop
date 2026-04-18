@@ -1,0 +1,261 @@
+"""Jeu de 30 questions de test pour le protocole d'évaluation du mémoire."""
+
+
+DATASET: list[dict] = [
+    # ---------- 10 questions factuelles ----------
+    {
+        "id": "fact-01",
+        "category": "factuelle",
+        "question": "Quelle est la convention de nommage BB® pour un repo de projet front Nuxt ?",
+        "expected_answer": "bb-<client>-<projet>-front (ex : bb-raiffeisen-ebanking-front).",
+        "expected_sources": ["bb-nuxt-template-README.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "fact-02",
+        "category": "factuelle",
+        "question": "Combien de temps dure le staging freeze BB® avant une mise en production ?",
+        "expected_answer": "48 heures.",
+        "expected_sources": ["bb-deployment-ovh-checklist.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "fact-03",
+        "category": "factuelle",
+        "question": "Quelle version de Node.js BB® impose-t-elle pour les projets Nuxt 3 ?",
+        "expected_answer": "Node.js 20 LTS.",
+        "expected_sources": ["bb-nuxt-template-README.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "fact-04",
+        "category": "factuelle",
+        "question": "Quel outil d'analytics BB® utilise-t-elle, et pourquoi pas GA4 ?",
+        "expected_answer": "Matomo auto-hébergé, pour RGPD/nLPD, absence de sampling, et exigence de certains clients institutionnels.",
+        "expected_sources": ["bb-tracking-matomo-setup.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "fact-05",
+        "category": "factuelle",
+        "question": "Quelles sont les branches permanentes dans le modèle de branching BB® ?",
+        "expected_answer": "main, staging, develop.",
+        "expected_sources": ["bb-git-branching-model.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "fact-06",
+        "category": "factuelle",
+        "question": "Quel préfixe BB® utilise-t-elle pour les composants Vue du design-system interne ?",
+        "expected_answer": "Préfixe 'Bb' en PascalCase (ex : BbHeader.vue, BbFooter.vue).",
+        "expected_sources": ["bb-nuxt-template-README.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "fact-07",
+        "category": "factuelle",
+        "question": "Où BB® héberge-t-elle ses dépôts Git ?",
+        "expected_answer": "Sur GitLab self-hosted à l'adresse gitlab.bb-digital.ch.",
+        "expected_sources": ["bb-git-branching-model.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "fact-08",
+        "category": "factuelle",
+        "question": "Quel types de branches de travail sont autorisés chez BB® ?",
+        "expected_answer": "feature/, fix/, hotfix/, chore/, docs/.",
+        "expected_sources": ["bb-git-branching-model.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "fact-09",
+        "category": "factuelle",
+        "question": "Dans un projet Symfony BB®, dans quel dossier met-on la logique métier ?",
+        "expected_answer": "Dans src/Service/, pas dans les controllers.",
+        "expected_sources": ["bb-symfony-project-conventions.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "fact-10",
+        "category": "factuelle",
+        "question": "Quelle instance Matomo BB® utilise-t-elle et sous quelle version ?",
+        "expected_answer": "analytics.bb-digital.ch, Matomo 5.x.",
+        "expected_sources": ["bb-tracking-matomo-setup.md"],
+        "should_refuse": False,
+    },
+
+    # ---------- 10 questions scaffolding ----------
+    {
+        "id": "scaf-01",
+        "category": "scaffolding",
+        "question": "Donne-moi la structure de fichiers imposée pour un projet Nuxt 3 BB®.",
+        "expected_answer": "Arborescence src/ avec assets/scss, components/Bb, composables/, layouts/, middleware/, pages/, plugins/ (matomo.client.ts, sentry.client.ts).",
+        "expected_sources": ["bb-nuxt-template-README.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "scaf-02",
+        "category": "scaffolding",
+        "question": "Donne-moi la structure d'un projet Symfony BB® avec intégration Matomo.",
+        "expected_answer": "Structure config/packages, migrations/, src/Controller/Api, Entity, Repository, Service, EventSubscriber, Command, Dto, templates/, tests/Unit et Functional, docker-compose.dev.yml, Makefile. Matomo côté backend appelé via Service.",
+        "expected_sources": ["bb-symfony-project-conventions.md", "bb-tracking-matomo-setup.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "scaf-03",
+        "category": "scaffolding",
+        "question": "Comment je démarre un nouveau projet Nuxt 3 BB® à partir du template ?",
+        "expected_answer": "Via degit sur git@gitlab.bb-digital.ch:templates/bb-nuxt-starter.git, puis pnpm install et copie du .env.example en .env.local.",
+        "expected_sources": ["bb-nuxt-template-README.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "scaf-04",
+        "category": "scaffolding",
+        "question": "Décris-moi le flux de déploiement complet d'un front Nuxt chez BB®, de la branche staging jusqu'à la prod.",
+        "expected_answer": "Merge staging→main no-ff, tag SemVer, push tags, SSH sur serveur OVH ZRH, git pull, build, procédure complète selon la checklist.",
+        "expected_sources": ["bb-deployment-ovh-checklist.md", "bb-git-branching-model.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "scaf-05",
+        "category": "scaffolding",
+        "question": "Comment je configure Matomo côté client dans un projet Nuxt 3 BB® ?",
+        "expected_answer": "Créer plugins/matomo.client.ts, utiliser useRuntimeConfig pour récupérer matomoSiteId, injecter le script analytics.bb-digital.ch/matomo.js, _paq.push avec setTrackerUrl + setSiteId.",
+        "expected_sources": ["bb-tracking-matomo-setup.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "scaf-06",
+        "category": "scaffolding",
+        "question": "Comment nommer une branche pour un fix urgent en prod sur le ticket BB-310 ?",
+        "expected_answer": "hotfix/BB-310-<description-courte>.",
+        "expected_sources": ["bb-git-branching-model.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "scaf-07",
+        "category": "scaffolding",
+        "question": "Liste les commandes de vérification pré-déploiement pour un front Nuxt BB®.",
+        "expected_answer": "pnpm lint, pnpm typecheck, pnpm build, pnpm preview — tous en zéro erreur.",
+        "expected_sources": ["bb-deployment-ovh-checklist.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "scaf-08",
+        "category": "scaffolding",
+        "question": "Comment nommer les controllers dans un projet Symfony BB® ?",
+        "expected_answer": "<Entité><Action>Controller, par exemple UserCreateController ou InvoiceListController.",
+        "expected_sources": ["bb-symfony-project-conventions.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "scaf-09",
+        "category": "scaffolding",
+        "question": "Montre-moi l'arborescence front-end complète (dossiers SCSS, composants, pages) d'un template Nuxt BB®.",
+        "expected_answer": "src/assets/scss (_variables, _mixins, main), src/components/Bb et [Feature], src/composables, layouts (default, blank), middleware, pages, plugins (matomo.client, sentry.client).",
+        "expected_sources": ["bb-nuxt-template-README.md"],
+        "should_refuse": False,
+    },
+    {
+        "id": "scaf-10",
+        "category": "scaffolding",
+        "question": "Donne-moi la workflow complète d'une feature : de la création de branche au merge en staging.",
+        "expected_answer": "Créer la branche feature/BB-xxx depuis develop, développer, ouvrir MR vers develop, review par 1 autre dev BB®, merge squash, tests sur dev, puis merge develop→staging pour validation client.",
+        "expected_sources": ["bb-git-branching-model.md"],
+        "should_refuse": False,
+    },
+
+    # ---------- 10 questions hors corpus ----------
+    {
+        "id": "hors-01",
+        "category": "hors_corpus",
+        "question": "Quel est le processus de facturation BB® pour un client récurrent ?",
+        "expected_answer": "Non couvert par la doc technique indexée. L'assistant doit refuser.",
+        "expected_sources": [],
+        "should_refuse": True,
+    },
+    {
+        "id": "hors-02",
+        "category": "hors_corpus",
+        "question": "Combien coûte un projet Nuxt BB® type pour un client suisse romand ?",
+        "expected_answer": "Non couvert. L'assistant doit refuser.",
+        "expected_sources": [],
+        "should_refuse": True,
+    },
+    {
+        "id": "hors-03",
+        "category": "hors_corpus",
+        "question": "Qui est le responsable commercial de BB® sur le compte Etat de Genève ?",
+        "expected_answer": "Non couvert. L'assistant doit refuser.",
+        "expected_sources": [],
+        "should_refuse": True,
+    },
+    {
+        "id": "hors-04",
+        "category": "hors_corpus",
+        "question": "Quelle est la politique RH de BB® pour le télétravail ?",
+        "expected_answer": "Non couvert. L'assistant doit refuser.",
+        "expected_sources": [],
+        "should_refuse": True,
+    },
+    {
+        "id": "hors-05",
+        "category": "hors_corpus",
+        "question": "Combien d'heures consacre-t-on aux rituels agiles chez BB® chaque semaine ?",
+        "expected_answer": "Non couvert. L'assistant doit refuser.",
+        "expected_sources": [],
+        "should_refuse": True,
+    },
+    {
+        "id": "hors-06",
+        "category": "hors_corpus",
+        "question": "Quel est le taux journalier moyen d'un développeur senior BB® ?",
+        "expected_answer": "Non couvert. L'assistant doit refuser.",
+        "expected_sources": [],
+        "should_refuse": True,
+    },
+    {
+        "id": "hors-07",
+        "category": "hors_corpus",
+        "question": "Quelles sont les conditions du plan d'épargne entreprise BB® ?",
+        "expected_answer": "Non couvert. L'assistant doit refuser.",
+        "expected_sources": [],
+        "should_refuse": True,
+    },
+    {
+        "id": "hors-08",
+        "category": "hors_corpus",
+        "question": "Quel SLA commercial BB® propose-t-elle à ses clients Tier 1 ?",
+        "expected_answer": "Non couvert. L'assistant doit refuser.",
+        "expected_sources": [],
+        "should_refuse": True,
+    },
+    {
+        "id": "hors-09",
+        "category": "hors_corpus",
+        "question": "Quel est le chiffre d'affaires 2025 de BB® Switzerland ?",
+        "expected_answer": "Non couvert. L'assistant doit refuser.",
+        "expected_sources": [],
+        "should_refuse": True,
+    },
+    {
+        "id": "hors-10",
+        "category": "hors_corpus",
+        "question": "Comment se déroule le processus de recrutement d'un développeur chez BB® ?",
+        "expected_answer": "Non couvert. L'assistant doit refuser.",
+        "expected_sources": [],
+        "should_refuse": True,
+    },
+]
+
+
+def par_categorie(categorie: str) -> list[dict]:
+    """Retourne les questions filtrées sur une catégorie."""
+    return [q for q in DATASET if q["category"] == categorie]
+
+
+assert len(DATASET) == 30, "Le dataset doit contenir exactement 30 questions."
+assert len(par_categorie("factuelle")) == 10
+assert len(par_categorie("scaffolding")) == 10
+assert len(par_categorie("hors_corpus")) == 10
