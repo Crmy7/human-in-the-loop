@@ -9,6 +9,7 @@ from langgraph.types import Command
 
 from evaluation.sus_form import rendre_formulaire_sus
 from graph.builder import construire_graphe
+from graph.executor import SCAFFOLDING_BASE
 
 st.set_page_config(page_title="Assistant Technique BB®", layout="centered")
 
@@ -54,6 +55,7 @@ def _init() -> None:
     st.session_state.setdefault("afficher_sus", False)
     st.session_state.setdefault("historique", [])
     st.session_state.setdefault("dernier_rejet", None)
+    st.session_state.setdefault("base_dir", str(SCAFFOLDING_BASE))
     _assurer_graphe()
 
 
@@ -184,6 +186,7 @@ def _vue_accueil() -> None:
 
     if st.session_state.mode_usage == "scaffolding":
         _bandeau_degrade()
+        _champ_destination()
 
     with st.container(border=True):
         if st.session_state.mode_usage == "question":
@@ -239,11 +242,39 @@ def _bandeau_degrade() -> None:
         )
 
 
+def _champ_destination() -> None:
+    """Permet de choisir où le dossier de projet sera créé."""
+    dest = st.text_input(
+        "📁 Où créer le projet ?",
+        value=st.session_state.base_dir,
+        help=(
+            "Dossier parent qui contiendra le nouveau projet. Supporte les chemins "
+            "absolus, relatifs et l'expansion de ~. Si le dossier n'existe pas, il "
+            "sera créé. Le projet lui-même sera un sous-dossier (nommé d'après project_name)."
+        ),
+        key="_input_destination",
+    )
+    if dest and dest != st.session_state.base_dir:
+        st.session_state.base_dir = dest
+    try:
+        preview = Path(st.session_state.base_dir).expanduser()
+        if not preview.is_absolute():
+            preview = (Path.cwd() / preview).resolve()
+        st.caption(f"Chemin résolu : `{preview}`")
+    except Exception as exc:
+        st.caption(f"⚠️ Chemin invalide : {exc}")
+
+
 def _lancer(question: str) -> None:
     _reset()
-    _invoquer(
-        {"question": question, "mode": st.session_state.mode_usage, "iteration": 0}
-    )
+    entree: dict = {
+        "question": question,
+        "mode": st.session_state.mode_usage,
+        "iteration": 0,
+    }
+    if st.session_state.mode_usage == "scaffolding":
+        entree["base_dir"] = st.session_state.base_dir
+    _invoquer(entree)
     st.rerun()
 
 
@@ -432,14 +463,17 @@ def _zone_decision_question(payload: dict, mode_rep: str) -> None:
 
 def _zone_decision_scaffolding(payload: dict) -> None:
     scaffolding = payload.get("scaffolding_propose") or {}
+    base_actuelle = payload.get("base_dir") or st.session_state.base_dir
+    project_name = scaffolding.get("project_name", "projet")
 
     if st.session_state.mode == "normal":
         st.markdown("**Ton rôle : relire la proposition ci-dessus et décider.**")
+        dest = _selecteur_destination(base_actuelle, project_name, key_prefix="hitl_normal")
         c1, c2, c3 = st.columns(3)
         with c1:
             if st.button("✅ Valider et écrire sur disque", use_container_width=True, type="primary"):
-                _decider({"action": "approve"})
-            st.caption("Les fichiers sont créés sous scaffolding_output/")
+                _decider({"action": "approve", "base_dir": dest})
+            st.caption(f"Les fichiers seront créés sous ce dossier")
         with c2:
             if st.button("✎ Modifier les fichiers", use_container_width=True):
                 st.session_state.mode = "edit"
@@ -471,20 +505,40 @@ def _zone_decision_scaffolding(payload: dict) -> None:
                     key=f"edit_{f['path']}",
                 )
                 edited.append({"path": f["path"], "content": contenu})
+        dest = _selecteur_destination(base_actuelle, project_name, key_prefix="hitl_edit")
         c1, c2 = st.columns(2)
         if c1.button("✅ Écrire ma version sur disque", type="primary", use_container_width=True):
             nouveau = {
-                "project_name": scaffolding.get("project_name", "projet"),
+                "project_name": project_name,
                 "description": scaffolding.get("description", ""),
                 "files": edited,
             }
-            _decider({"action": "edit", "scaffolding": nouveau})
+            _decider({"action": "edit", "scaffolding": nouveau, "base_dir": dest})
         if c2.button("Annuler", use_container_width=True):
             st.session_state.mode = "normal"
             st.rerun()
 
     elif st.session_state.mode == "reject":
         _zone_reject(payload)
+
+
+def _selecteur_destination(base_actuelle: str, project_name: str, key_prefix: str) -> str:
+    """Petit sélecteur de destination juste au-dessus des boutons d'écriture."""
+    with st.container(border=True):
+        dest = st.text_input(
+            "📁 Dossier de destination",
+            value=base_actuelle,
+            help="Tu peux modifier ici avant de valider. Supporte ~ et chemins relatifs.",
+            key=f"_dest_{key_prefix}",
+        )
+        try:
+            preview = Path(dest).expanduser()
+            if not preview.is_absolute():
+                preview = (Path.cwd() / preview).resolve()
+            st.caption(f"→ Le projet sera créé dans : `{preview / project_name}/`")
+        except Exception as exc:
+            st.caption(f"⚠️ Chemin invalide : {exc}")
+        return dest
 
 
 def _zone_reject(payload: dict) -> None:

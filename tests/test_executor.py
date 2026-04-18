@@ -146,3 +146,23 @@ def test_dry_run_n_ecrit_rien(base_temp):
     result = ecrire_scaffolding(scaffolding, dry_run=True)
     assert result["dry_run"] is True
     assert not Path(result["dossier_ecrit"]).exists()
+
+
+def test_ecriture_base_custom(tmp_path):
+    """L'appelant peut choisir un dossier parent arbitraire (supporte ~ et relatif)."""
+    scaffolding = {
+        "project_name": "ailleurs",
+        "files": [{"path": "a.txt", "content": "ok"}],
+    }
+    result = ecrire_scaffolding(scaffolding, base=tmp_path / "custom")
+    dossier = Path(result["dossier_ecrit"])
+    assert dossier.parent.name == "custom"
+    assert dossier.name == "ailleurs"
+    assert (dossier / "a.txt").read_text() == "ok"
+
+
+def test_base_tilde_expansion(tmp_path, monkeypatch):
+    """Le dossier parent supporte l'expansion de ~."""
+    monkeypatch.setenv("HOME", str(tmp_path))
+    from graph.executor import _resoudre_base
+    assert _resoudre_base("~/test").parent == tmp_path

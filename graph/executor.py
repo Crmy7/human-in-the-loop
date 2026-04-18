@@ -54,10 +54,24 @@ def _dossier_unique(base: Path, slug: str) -> Path:
         i += 1
 
 
-def ecrire_scaffolding(scaffolding: dict, dry_run: bool = False) -> dict:
-    """Écrit les fichiers du scaffolding dans un dossier unique sous scaffolding_output/.
+def _resoudre_base(base: str | Path | None) -> Path:
+    """Résout le dossier parent d'écriture (supporte ~ et chemins relatifs)."""
+    if not base:
+        return SCAFFOLDING_BASE
+    chemin = Path(str(base)).expanduser()
+    if not chemin.is_absolute():
+        chemin = (Path.cwd() / chemin).resolve()
+    return chemin
 
-    Atomique : si un path est invalide, aucune écriture. Retourne {dossier_ecrit, nb_fichiers}.
+
+def ecrire_scaffolding(
+    scaffolding: dict,
+    base: str | Path | None = None,
+    dry_run: bool = False,
+) -> dict:
+    """Écrit les fichiers du scaffolding dans un dossier unique sous `base` (par défaut
+    scaffolding_output/). Atomique : si un path est invalide, aucune écriture.
+    Retourne {dossier_ecrit, nb_fichiers, dry_run}.
     """
     project_name = slugifier(scaffolding.get("project_name") or "projet")
     files = scaffolding.get("files") or []
@@ -67,8 +81,9 @@ def ecrire_scaffolding(scaffolding: dict, dry_run: bool = False) -> dict:
     if not isinstance(files, list):
         raise ValueError("Le champ 'files' doit être une liste.")
 
-    SCAFFOLDING_BASE.mkdir(parents=True, exist_ok=True)
-    dossier_cible = _dossier_unique(SCAFFOLDING_BASE, project_name)
+    parent = _resoudre_base(base)
+    parent.mkdir(parents=True, exist_ok=True)
+    dossier_cible = _dossier_unique(parent, project_name)
 
     # Validation all paths first — atomicité tout-ou-rien
     for f in files:
@@ -102,5 +117,6 @@ def ecrire_scaffolding(scaffolding: dict, dry_run: bool = False) -> dict:
 def noeud_executor(etat: EtatAssistant) -> dict:
     """Nœud LangGraph : écrit le scaffolding validé sur disque."""
     scaffolding = etat.get("scaffolding_propose") or {}
-    result = ecrire_scaffolding(scaffolding)
+    base = etat.get("base_dir")
+    result = ecrire_scaffolding(scaffolding, base=base)
     return {"executor_output": result}

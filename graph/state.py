@@ -9,6 +9,7 @@ class EtatAssistant(TypedDict, total=False):
     # Entrée
     question: str
     mode: str  # "question" | "scaffolding"
+    base_dir: Optional[str]  # dossier parent d'écriture (scaffolding uniquement)
 
     # Sortie retriever
     passages: list[dict]

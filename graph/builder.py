@@ -26,6 +26,7 @@ def noeud_hitl(etat: EtatAssistant) -> dict:
     payload = {
         "question": etat["question"],
         "mode": etat.get("mode", "question"),
+        "base_dir": etat.get("base_dir"),
         "reponse_brouillon": etat.get("reponse_brouillon", ""),
         "scaffolding_propose": etat.get("scaffolding_propose") or {},
         "rapport_critique": etat.get("rapport_critique") or {},
@@ -39,7 +40,10 @@ def noeud_hitl(etat: EtatAssistant) -> dict:
 
     if action == "approve":
         if mode == "scaffolding":
-            return {"decision_humaine": "approve"}
+            out = {"decision_humaine": "approve"}
+            if decision.get("base_dir"):
+                out["base_dir"] = decision["base_dir"]
+            return out
         return {
             "decision_humaine": "approve",
             "reponse_finale": etat.get("reponse_brouillon", ""),
@@ -47,12 +51,14 @@ def noeud_hitl(etat: EtatAssistant) -> dict:
 
     if action == "edit":
         if mode == "scaffolding":
-            # L'édition peut remplacer le scaffolding complet (fichiers édités côté UI)
             nouveau = decision.get("scaffolding") or etat.get("scaffolding_propose") or {}
-            return {
+            out = {
                 "decision_humaine": "edit",
                 "scaffolding_propose": nouveau,
             }
+            if decision.get("base_dir"):
+                out["base_dir"] = decision["base_dir"]
+            return out
         return {
             "decision_humaine": "edit",
             "reponse_finale": decision.get("texte", etat.get("reponse_brouillon", "")),
