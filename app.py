@@ -1,6 +1,8 @@
 """Interface Streamlit de l'Assistant Technique BB® — deux modes + démo dégradée."""
 
 import re
+import subprocess
+import sys
 import uuid
 from pathlib import Path
 
@@ -10,6 +12,31 @@ from langgraph.types import Command
 from evaluation.sus_form import rendre_formulaire_sus
 from graph.builder import construire_graphe
 from graph.executor import SCAFFOLDING_BASE
+
+
+def _ouvrir_picker_dossier(titre: str = "Choisir le dossier de destination") -> str | None:
+    """Ouvre le picker natif de l'OS dans un subprocess (évite les soucis de threading)."""
+    code = (
+        "import tkinter as tk\n"
+        "from tkinter import filedialog\n"
+        "r = tk.Tk()\n"
+        "r.withdraw()\n"
+        "r.attributes('-topmost', True)\n"
+        f"p = filedialog.askdirectory(title={titre!r})\n"
+        "r.destroy()\n"
+        "print(p)\n"
+    )
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+        path = result.stdout.strip()
+        return path or None
+    except Exception:
+        return None
 
 st.set_page_config(page_title="Assistant Technique BB®", layout="centered")
 
@@ -242,27 +269,24 @@ def _bandeau_degrade() -> None:
         )
 
 
+def _on_parcourir_accueil() -> None:
+    choix = _ouvrir_picker_dossier("Choisir le dossier de destination BB®")
+    if choix:
+        st.session_state.base_dir = choix
+
+
 def _champ_destination() -> None:
-    """Permet de choisir où le dossier de projet sera créé."""
-    dest = st.text_input(
-        "📁 Où créer le projet ?",
-        value=st.session_state.base_dir,
-        help=(
-            "Dossier parent qui contiendra le nouveau projet. Supporte les chemins "
-            "absolus, relatifs et l'expansion de ~. Si le dossier n'existe pas, il "
-            "sera créé. Le projet lui-même sera un sous-dossier (nommé d'après project_name)."
-        ),
-        key="_input_destination",
-    )
-    if dest and dest != st.session_state.base_dir:
-        st.session_state.base_dir = dest
-    try:
-        preview = Path(st.session_state.base_dir).expanduser()
-        if not preview.is_absolute():
-            preview = (Path.cwd() / preview).resolve()
-        st.caption(f"Chemin résolu : `{preview}`")
-    except Exception as exc:
-        st.caption(f"⚠️ Chemin invalide : {exc}")
+    """Affiche le dossier sélectionné avec un bouton Parcourir."""
+    with st.container(border=True):
+        c1, c2 = st.columns([3, 1])
+        c1.markdown("📁 **Destination**")
+        c1.caption(f"`{st.session_state.base_dir}`")
+        c2.button(
+            "📂 Choisir un dossier",
+            use_container_width=True,
+            on_click=_on_parcourir_accueil,
+            key="_btn_parcourir_accueil",
+        )
 
 
 def _lancer(question: str) -> None:
@@ -523,22 +547,35 @@ def _zone_decision_scaffolding(payload: dict) -> None:
 
 
 def _selecteur_destination(base_actuelle: str, project_name: str, key_prefix: str) -> str:
-    """Petit sélecteur de destination juste au-dessus des boutons d'écriture."""
+    """Affiche le dossier sélectionné + un bouton Parcourir, au-dessus des boutons d'écriture."""
+    # Initialiser la clé pour ce contexte
+    key_val = f"_dest_val_{key_prefix}"
+    if key_val not in st.session_state:
+        st.session_state[key_val] = base_actuelle
+
+    def on_parcourir():
+        choix = _ouvrir_picker_dossier(f"Choisir la destination pour {project_name}")
+        if choix:
+            st.session_state[key_val] = choix
+
     with st.container(border=True):
-        dest = st.text_input(
-            "📁 Dossier de destination",
-            value=base_actuelle,
-            help="Tu peux modifier ici avant de valider. Supporte ~ et chemins relatifs.",
-            key=f"_dest_{key_prefix}",
+        c1, c2 = st.columns([3, 1])
+        c1.markdown("📁 **Destination**")
+        c1.caption(f"`{st.session_state[key_val]}`")
+        c2.button(
+            "📂 Choisir un dossier",
+            use_container_width=True,
+            on_click=on_parcourir,
+            key=f"_btn_parcourir_{key_prefix}",
         )
         try:
-            preview = Path(dest).expanduser()
+            preview = Path(st.session_state[key_val]).expanduser()
             if not preview.is_absolute():
                 preview = (Path.cwd() / preview).resolve()
             st.caption(f"→ Le projet sera créé dans : `{preview / project_name}/`")
         except Exception as exc:
             st.caption(f"⚠️ Chemin invalide : {exc}")
-        return dest
+        return st.session_state[key_val]
 
 
 def _zone_reject(payload: dict) -> None:
