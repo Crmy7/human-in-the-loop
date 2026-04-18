@@ -16,6 +16,10 @@ data/eval_results/
 # IDE
 .vscode/
 .idea/
+.claude/
+
+# Pytest
+.pytest_cache/
 
 # OS
 .DS_Store
