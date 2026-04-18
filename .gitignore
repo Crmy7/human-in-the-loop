@@ -13,6 +13,9 @@ data/chroma/
 data/raw_html/
 data/eval_results/
 
+# Scaffolding écrit par l'executor (le plan B est dans demo_scaffolding/)
+scaffolding_output/
+
 # IDE
 .vscode/
 .idea/

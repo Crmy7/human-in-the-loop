@@ -6,14 +6,25 @@ validation humaine obligatoire. Support du mémoire de Master MyDigitalSchool 20
 
 ## Architecture
 
-Trois nœuds LangGraph en série, un checkpoint humain, une boucle de retour
-plafonnée à 3 itérations :
+Quatre nœuds LangGraph, un checkpoint humain, un nœud d'écriture disque pour
+le mode scaffolding, et une boucle de retour plafonnée à 3 itérations :
 
 ```
-START → retriever → generator → critic → hitl → [approve → END]
-                                            ├── [edit → END]
-                                            └── [reject (iter<3) → generator]
+START → retriever → generator → critic → hitl → [approve (question)     → END]
+                                            ├── [approve (scaffolding)  → executor → END]
+                                            ├── [edit    (question)     → END]
+                                            ├── [edit    (scaffolding)  → executor → END]
+                                            └── [reject  (iter<3)       → generator]
 ```
+
+Deux modes d'usage :
+- **Question technique** — réponse en prose, validation humaine avant
+  publication.
+- **Scaffolding projet** — proposition de 4-6 fichiers JSON, validation
+  humaine avant **écriture effective sur disque** dans `scaffolding_output/`.
+
+Un **mode démonstration dégradée** (vibe coding) court-circuite le Critic et
+le HITL pour illustrer par contraste ce que l'architecture apporte.
 
 - **Retriever** : similarity search k=5 sur ChromaDB, filtre optionnel par
   `source_type`. Embeddings OpenAI `text-embedding-3-small`.
@@ -80,8 +91,20 @@ L'interface expose :
 - trois boutons **Approuver / Modifier / Rejeter**. Un rejet avec commentaire
   réinjecte le feedback dans le prompt Generator, jusqu'à 3 itérations.
 
-Un bouton _« Terminer la session et évaluer l'outil »_ ouvre le formulaire SUS
+Un bouton _« Noter l'outil (SUS) »_ ouvre le formulaire System Usability Scale
 à 10 questions standard.
+
+### Mode scaffolding
+
+Dans l'accueil, bascule le sélecteur sur **🧱 Scaffolding projet**. Tu décris
+un projet (ex. *« Initialise un Nuxt 3 pour Raiffeisen avec Matomo et OVH »*),
+l'IA propose 4-6 fichiers. Tu vois l'arborescence + le contenu de chaque
+fichier. Tu **valides** (création effective dans `./scaffolding_output/`),
+**modifies** fichier par fichier, ou **refais** avec un commentaire.
+
+Le **mode démonstration dégradée** (case à cocher) désactive Critic et HITL.
+À réserver à la soutenance, pour la comparaison avant/après. Voir `DEMO.md`
+pour le scénario complet.
 
 ## Évaluation
 
@@ -117,11 +140,15 @@ et le routage conditionnel du graphe (7 branches). Pas de test Streamlit.
 ├── .env.example
 ├── graph/
 │   ├── state.py                  # EtatAssistant (TypedDict)
+│   ├── llm_client.py             # Adaptateur Anthropic / OpenAI
 │   ├── retriever.py
-│   ├── generator.py
-│   ├── critic.py
-│   ├── prompts.py                # Prompts Generator + Critic isolés
+│   ├── generator.py              # Modes question + scaffolding
+│   ├── critic.py                 # Modes question + scaffolding
+│   ├── executor.py               # Écriture disque validée (scaffolding)
+│   ├── prompts.py                # 4 prompts : Generator/Critic × question/scaffolding
 │   └── builder.py                # StateGraph + interrupt + routage
+├── demo_scaffolding/             # Versions pré-peuplées pour plan B soutenance
+├── DEMO.md                       # Scénario de soutenance
 ├── ingestion/
 │   ├── chunker.py
 │   ├── docusaurus.py             # Lecture fake_bb_docs + dossier .md
