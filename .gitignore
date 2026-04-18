@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# Secrets
+.env
+
+# Data (reconstructible via ingestion)
+data/chroma/
+data/raw_html/
+data/eval_results/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
