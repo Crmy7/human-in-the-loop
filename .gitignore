@@ -21,6 +21,9 @@ scaffolding_output/
 .idea/
 .claude/
 
+# Brief (usage personnel, hors repo public)
+Claude.md
+
 # Pytest
 .pytest_cache/
 
