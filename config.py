@@ -23,7 +23,9 @@ ANTHROPIC_API_KEY: str = _require_env("ANTHROPIC_API_KEY")
 OPENAI_API_KEY: str = _require_env("OPENAI_API_KEY")
 
 # --- Modèles ---
+LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "anthropic").lower()  # "anthropic" | "openai"
 LLM_MODEL: str = os.getenv("LLM_MODEL", "claude-sonnet-4-5-20250929")
+OPENAI_CHAT_MODEL: str = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
 EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 
 # --- ChromaDB ---

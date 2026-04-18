@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timezone
 
 from langchain_anthropic import ChatAnthropic
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from ragas import EvaluationDataset, SingleTurnSample, evaluate
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from ragas.llms import LangchainLLMWrapper
@@ -23,7 +23,9 @@ from config import (
     DATA_DIR,
     EMBEDDING_MODEL,
     LLM_MODEL,
+    LLM_PROVIDER,
     OPENAI_API_KEY,
+    OPENAI_CHAT_MODEL,
 )
 from evaluation.dataset import DATASET
 from graph.builder import construire_graphe
@@ -100,10 +102,15 @@ def executer_evaluation() -> dict:
         resultats.append(_executer_pipeline(question))
         time.sleep(0.2)
 
-    logger.info("2/3 — calcul des métriques RAGAS")
-    llm_eval = LangchainLLMWrapper(
-        ChatAnthropic(api_key=ANTHROPIC_API_KEY, model=LLM_MODEL, temperature=0)
-    )
+    logger.info("2/3 — calcul des métriques RAGAS (provider : %s)", LLM_PROVIDER)
+    if LLM_PROVIDER == "openai":
+        llm_eval = LangchainLLMWrapper(
+            ChatOpenAI(api_key=OPENAI_API_KEY, model=OPENAI_CHAT_MODEL, temperature=0)
+        )
+    else:
+        llm_eval = LangchainLLMWrapper(
+            ChatAnthropic(api_key=ANTHROPIC_API_KEY, model=LLM_MODEL, temperature=0)
+        )
     emb_eval = LangchainEmbeddingsWrapper(
         OpenAIEmbeddings(api_key=OPENAI_API_KEY, model=EMBEDDING_MODEL)
     )
