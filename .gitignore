@@ -11,7 +11,9 @@ venv/
 # Data (reconstructible via ingestion)
 data/chroma/
 data/raw_html/
-data/eval_results/
+data/eval_results/*
+# Exception : on garde un échantillon de rapport RAGAS pour le mémoire
+!data/eval_results/ragas_20260508T155144Z.json
 
 # Scaffolding écrit par l'executor (le plan B est dans demo_scaffolding/)
 scaffolding_output/

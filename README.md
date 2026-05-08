@@ -119,7 +119,9 @@ Métriques calculées : Faithfulness, Answer Relevancy, Context Precision,
 Context Recall + taux de refus correct sur les 10 questions hors corpus.
 Résultats sauvegardés dans `data/eval_results/ragas_<timestamp>.json`.
 
-Les résultats SUS sont dans `data/eval_results/sus_<timestamp>.json`.
+📄 **Échantillon versionné pour le mémoire** → [Voir le rapport RAGAS du 8 mai 2026](./data/eval_results/ragas_20260508T155144Z.json)
+
+Les résultats SUS seraient dans `data/eval_results/sus_<timestamp>.json`.
 
 ## Tests
 
